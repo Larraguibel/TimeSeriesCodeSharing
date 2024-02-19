@@ -24,12 +24,10 @@ for(i in 1:length(data_train) - 1){
 xtrain <- as.vector(xtrain)
 xtrain = t(xtrain)
 xtrain = as.data.frame(xtrain)
-names(xtrain) = 1:12
 
 # modifying ytrain
 ytrain = data_train[1, 2:length(data_train)]
 ytrain <- as.data.frame(lapply(ytrain, as.numeric))
-names(ytrain) = 1:12
 
 df = rbind(xtrain, ytrain)
 df = t(df)
@@ -95,3 +93,27 @@ beta1.var= beta_hat.var[2,2]
 cat(sprintf("\nthe values for the std errors of the estimators are: \nstd(b0.hat): %f \nstd(b1.hat): %f",
             beta0.var, beta1.var))
 
+
+
+#####################
+#####  Part 4 #######  
+#####################
+
+#########
+## 4.1 ##
+#########
+
+# As the data shows a linear behavior, we will implement a linear trend model.
+
+L = cbind(c(1,0), c(1,1))
+f.0 = c(1,0)
+
+
+#########
+## 4.2 ##
+#########
+
+# Our x vector starts from 2018. We need to translate it into the negative
+# part to the axis.
+
+x.trend = 
