@@ -27,9 +27,11 @@ tr_da <- data.frame(time = x,Drivmidler_i_alt=training_data)
 
 # Plot the training data versus x
 y_name<- 'Number of vehicles'
-ggplot(tr_da, aes(x = time, y = Drivmidler_i_alt)) +
+p<-ggplot(tr_da, aes(x = time, y = Drivmidler_i_alt)) +
   geom_point(color = "blue", shape = "o") +
-  labs(x = 'Year', y = y_name, title = 'Drivmidler i alt vs time')
+  labs(x = 'Year', y = y_name)+ ggtitle('Drivmidler i alt vs time')+
+  theme(plot.title = element_text(hjust = 0.5))
+p
 
 #########
 ## 1.2 ##
@@ -48,15 +50,13 @@ ggplot(tr_da, aes(x = time, y = Drivmidler_i_alt)) +
 ## 2.1 ##
 #########
 
-X = cbind(1, df[,1])
-x = df[,1]
-y = df[,2]
-N = length(y)
+X = cbind(1, tr_da$'time')
+y <- tr_da$'Drivmidler_i_alt'
 inv_xtx = solve(t(X)%*%X)
-beta_hat = inv_xtx%*%t(X)%*%y
-beta0 = round(as.double(beta_hat[1]), 3)
-beta1 = round(as.double(beta_hat[2]), 3)
-abline(a = beta0, b=beta1, col='red')
+theta_hat = inv_xtx%*%t(X)%*%y
+beta0 = round(as.double(theta_hat[1]), 3)
+beta1 = round(as.double(theta_hat[2]), 3)
+p+geom_abline(intercept = theta_hat[1], slope=theta_hat[2], col='red')
 
 # To estimate the parameters beta, I used the matrix form of the maximum
 # likelihood estimator for the parameters. For this, I considered that 
