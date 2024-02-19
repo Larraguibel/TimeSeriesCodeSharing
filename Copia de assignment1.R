@@ -1,11 +1,9 @@
+# Assignment 1
+library(ggplot2)
 library(fpp2)
 library(dplyr)
 library(tidyverse)
 library(readxl)
-
-data_train = readxl::read_excel(file.choose())
-data_test = readxl::read_excel(file.choose())
-
 
 #####################
 #####  Part 1 #######  
@@ -15,25 +13,23 @@ data_test = readxl::read_excel(file.choose())
 ## 1.1 ##
 #########
 
-# Creating the xtrain variable
-xtrain = rep(0.0, length(data_train) - 1)
-for(i in 1:length(data_train) - 1){
-  xtrain[i] = 2018 + (i - 1)/12
-}
+# Create the vector of time, x
+n<-59
+x1=2018.
+x59=x1+n/12-1/12
+tstep=1/12
+x=seq(x1,x59,by=tstep)
 
-xtrain <- as.vector(xtrain)
-xtrain = t(xtrain)
-xtrain = as.data.frame(xtrain)
+# Load the training data & the dataframe of the training data and time
+path_t<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_train.xlsx"           # Change the path !
+training_data <- t(readxl::read_excel(path_t, sheet = 1, col_names =TRUE)[1,2:(n+1)])
+tr_da <- data.frame(time = x,Drivmidler_i_alt=training_data)
 
-# modifying ytrain
-ytrain = data_train[1, 2:length(data_train)]
-ytrain <- as.data.frame(lapply(ytrain, as.numeric))
-
-df = rbind(xtrain, ytrain)
-df = t(df)
-
-plot(df[,1], df[,2], col="blue", 
-     xlab="Time", ylab="Number of Vehicles")
+# Plot the training data versus x
+y_name<- 'Number of vehicles'
+ggplot(tr_da, aes(x = time, y = Drivmidler_i_alt)) +
+  geom_point(color = "blue", shape = "o") +
+  labs(x = 'Year', y = y_name, title = 'Drivmidler i alt vs time')
 
 #########
 ## 1.2 ##
