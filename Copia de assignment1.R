@@ -82,9 +82,9 @@ cat(sprintf("\nthe values are: \n b0.hat: %f \n b1.hat: %f", beta0, beta1))
 # matrix.
 
 # Predicted values
-y_pred <- X %*% theta_hat
+y_lm <- X %*% theta_hat
 # residuals
-residuals <- y - y_pred
+residuals <- y - y_lm
 S_theta<-as.double(t(residuals) %*% residuals)
 # sigma^2
 residuals_std <- sqrt(S_theta/(n-2))
@@ -100,6 +100,35 @@ results2_2 <- data.frame(
   `Standard Error` = c(sigma_beta0_hat, sigma_beta1_hat)
 )
 print(results2_2)
+
+#########
+## 2.3 ##
+#########
+
+# Create the vector of forecasting time, xtest
+x60=x59+1/12
+x71=x59+1
+xtest=seq(x60,x71,by=tstep)
+Xtest <- cbind(1, xtest)
+print(Xtest)
+
+# compute predictions 
+y_pred <- Xtest%*%theta_hat
+print(y_pred)
+# compute prediction variance-covariance matrix:
+sigma2<-residuals_std**2
+Vtheta_hat_test <- sigma2*(1+Xtest%*%inv_xtx%*%t(Xtest))
+# the variances of individual predictions are in the diagonal of the matrix above# compute "prediction intervals"
+#he critical value for a 5% significance level is(as the t-distribution can be approximated by the standard normal
+#distribution when the sample size is large (typically N > 30)): 
+z1_a2=1.96
+y_pred_lwr <- y_pred - z1_a2*sqrt(diag(Vtheta_hat_test))
+y_pred_upr <- y_pred + z1_a2*sqrt(diag(Vtheta_hat_test))
+# present a table of predicted values and their intervals
+forecast_values <- data.frame(Time=xtest,Predicted_values= y_pred,
+                              Lower_intervals = y_pred_lwr,
+                              Upper_intervals = y_pred_upr)
+print(forecast_values)
 
 #####################
 #####  Part 4 #######  
