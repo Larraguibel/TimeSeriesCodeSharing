@@ -23,11 +23,11 @@ x=seq(x1,x59,by=tstep)
 # Load the training data & the dataframe of the training data and time
 path_t<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_train.xlsx"           # Change the path !
 training_data <- t(readxl::read_excel(path_t, sheet = 1, col_names =TRUE)[1,2:(n+1)])
-tr_da <- data.frame(time = x,Drivmidler_i_alt=training_data)
+train_data <- data.frame(time = x,Drivmidler_i_alt=training_data)
 
 # Plot the training data versus x
 y_name<- 'Number of vehicles'
-p<-ggplot(tr_da, aes(x = time, y = Drivmidler_i_alt)) +
+p<-ggplot(train_data, aes(x = time, y = Drivmidler_i_alt)) +
   geom_point(color = "blue", shape = "o") +
   labs(x = 'Year', y = y_name)+ ggtitle('Drivmidler i alt vs time')+
   theme(plot.title = element_text(hjust = 0.5))
@@ -50,19 +50,20 @@ p
 ## 2.1 ##
 #########
 
-X = cbind(1, tr_da$'time')
-y <- tr_da$'Drivmidler_i_alt'
+X = cbind(1, train_data$'time')
+y <- train_data$'Drivmidler_i_alt'
 inv_xtx = solve(t(X)%*%X)
 theta_hat = inv_xtx%*%t(X)%*%y
 beta0 = round(as.double(theta_hat[1]), 3)
 beta1 = round(as.double(theta_hat[2]), 3)
 p+geom_abline(intercept = theta_hat[1], slope=theta_hat[2], col='red')
 
-# To estimate the parameters beta, I used the matrix form of the maximum
+# To estimate the parameters theta, I used the matrix form of the maximum
 # likelihood estimator for the parameters. For this, I considered that 
-# each observation comes from a normal distribution, and the 
-# errors have mean 0 and constant variance sigma. For every pair of
-# error_i and error_j, i != j, error_i and error_j are uncorrelated.
+# each observation comes from a normal distribution, and the errors also
+# follow the normal distribution with mean equal to 0 and constant variance 
+# sigma. For every pair of error_i and error_j, i != j, error_i and error_j 
+# are uncorrelated.
 
 
 #########
