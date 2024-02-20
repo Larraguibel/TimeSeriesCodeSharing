@@ -73,13 +73,30 @@ p+geom_abline(intercept = theta_hat[1], slope=theta_hat[2], col='red')
 cat(sprintf("\nthe values are: \n b0.hat: %f \n b1.hat: %f", beta0, beta1))
 
 
-# No we will estimate the standard errors for b0 and b1. for this, we must 
+# At this point, we will estimate the standard errors for b0 and b1. For this, we must 
 # remember that the variance for the beta_hat vector is sigma * (x^T x)^{-1}.
 # Then, we just take the diagonal elements of the resulting matrix.
 
 # We estimate first the std deviation of the errors using its MLE:
 
-errors = y - (beta0 + beta1*x)
+# Predicted values
+y_pred <- X %*% theta_hat
+
+# residuals
+residuals <- y - y_pred
+residuals_std <- sd(residuals)
+sigma_beta0_hat <- residuals_std * sqrt(solve(t(X) %*% X)[1, 1])
+sigma_beta1_hat <- residuals_std * sqrt(solve(t(X) %*% X)[2, 2])
+
+results2_2 <- data.frame(
+  Coeff = c('beta_0', 'beta_1'),
+  Estimate = OLS,
+  `Standard Error` = c(sigma_beta0_hat, sigma_beta1_hat)
+)
+print(results2_2)
+########################################################################
+###Diego 2.2############################################################
+########################################################################
 SSE = as.double(t(errors) %*% errors)
 
 sigma_MLE = sqrt(SSE/(N - 1))
@@ -89,7 +106,7 @@ beta1.var= beta_hat.var[2,2]
 
 cat(sprintf("\nthe values for the std errors of the estimators are: \nstd(b0.hat): %f \nstd(b1.hat): %f",
             beta0.var, beta1.var))
-
+########################################################################
 
 
 #####################
