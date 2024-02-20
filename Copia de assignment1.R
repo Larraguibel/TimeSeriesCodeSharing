@@ -72,42 +72,33 @@ p+geom_abline(intercept = theta_hat[1], slope=theta_hat[2], col='red')
 
 cat(sprintf("\nthe values are: \n b0.hat: %f \n b1.hat: %f", beta0, beta1))
 
-
-# At this point, we will estimate the standard errors for b0 and b1. For this, we must 
-# remember that the variance for the beta_hat vector is sigma * (x^T x)^{-1}.
-# Then, we just take the diagonal elements of the resulting matrix.
+# At this point, we will estimate the predicted values for b0 and b1, and the 
+# residuals (the difference of real values and the predicted).Afterwards, we 
+# can calculate the standart error of the residuals. For this, we must remember 
+# that the variance for the beta_hat vector is sigma * (x^T x)^{-1}.Then, we 
+# just take the diagonal elements of the resulting matrix.
 
 # We estimate first the std deviation of the errors using its MLE:
 
 # Predicted values
 y_pred <- X %*% theta_hat
-
 # residuals
 residuals <- y - y_pred
-residuals_std <- sd(residuals)
+S_theta<-as.double(t(residuals) %*% residuals)
+# sigma
+residuals_std <- sqrt(S_theta/(n-2))
+# variance of theta
+Var_theta<-residuals_std**2*inv_xtx
+#  est. standard errors
 sigma_beta0_hat <- residuals_std * sqrt(solve(t(X) %*% X)[1, 1])
-sigma_beta1_hat <- residuals_std * sqrt(solve(t(X) %*% X)[2, 2])
-
+sigma_beta1_hat <- residuals_std * sqrt(solve(t(X) %*% X)[2, 2]) 
+# present the  estimated parameters beta and their standard errors
 results2_2 <- data.frame(
   Coeff = c('beta_0', 'beta_1'),
-  Estimate = OLS,
+  Estimate = theta_hat,
   `Standard Error` = c(sigma_beta0_hat, sigma_beta1_hat)
 )
 print(results2_2)
-########################################################################
-###Diego 2.2############################################################
-########################################################################
-SSE = as.double(t(errors) %*% errors)
-
-sigma_MLE = sqrt(SSE/(N - 1))
-beta_hat.var = sigma_MLE * inv_xtx
-beta0.var= beta_hat.var[1,1]
-beta1.var= beta_hat.var[2,2]
-
-cat(sprintf("\nthe values for the std errors of the estimators are: \nstd(b0.hat): %f \nstd(b1.hat): %f",
-            beta0.var, beta1.var))
-########################################################################
-
 
 #####################
 #####  Part 4 #######  
