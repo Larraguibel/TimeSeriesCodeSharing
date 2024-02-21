@@ -130,6 +130,57 @@ forecast_values <- data.frame(Time=xtest,Predicted_values= y_pred,
                               Upper_intervals = y_pred_upr)
 print(forecast_values)
 
+#########
+## 2.4 ##
+#########
+
+plotting2_4<-ggplot(train_data, aes(x = time, y = Drivmidler_i_alt,color = "Train Data")) +
+  geom_point(shape = 16,size=1) +
+  labs(x = 'Year', y = y_name)+ ggtitle('Drivmidler i alt vs time')+
+  theme(plot.title = element_text(hjust = 0.6))+
+  geom_line(aes(y=y_lm,color = "Fitted model"), size=.5,show.legend = TRUE)+
+  geom_point(data=forecast_values, aes(x = Time, y = Predicted_values,color = "Forecast"),shape = 16, size=1.)+
+  geom_ribbon(data=forecast_values, aes(x=Time,ymin=Lower_intervals, ymax=Upper_intervals), inherit.aes=FALSE, alpha=0.2, fill="red")
+plotting2_4+labs(color = "") +
+  scale_color_manual(values = c("red","red","blue"), name = "", labels = c("Fitted model","Forecasted values","Training data"))+
+  guides(color = guide_legend(override.aes = list(linetype = c("solid","blank","blank"),shape=c(NA,16,16))))
+
+#########
+## 2.5 ##
+#########
+
+# Load the test data:
+path_ch<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_test.xlsx"
+check_data <- t(readxl::read_excel(path_ch, sheet = 1, col_names =TRUE)[1,2:13])
+test_data <- data.frame(Time = xtest,Drivmidler_i_alt=check_data)
+# plot WITH test data:
+plotting2_5<-plotting2_4 +
+  geom_point(data=test_data, aes(x=Time,y=Drivmidler_i_alt,color = "Test Data"), size=1.25)+
+  labs(color = "") +
+  scale_color_manual(values = c("red","red","green","blue"), name = "", labels = c("Fitted model","Forecasted values","Test data","Training data"))+
+  guides(color = guide_legend(override.aes = list(linetype = c("solid","blank","blank","blank"),shape=c(NA,16,16,16))))
+plotting2_5
+
+# Our forecast is not good as the model consistently overestimates the values of the test data. 
+# This is evident in the graph, where all test data points fall below the lower prediction interval.
+# The model initially performs well, exhibiting smaller residuals during the first 2 years of the 
+# 5-year training data period. However, a notable increase in residuals is observed during the last 
+# 3 years of the training data.As a result, the linear model is inadequate to describe the test data,
+# as it fails to capture changing dynamics and trends in the later years of the training data. The
+# The accuracy of the  model could  be enchanced if we consider more weighting the later data  of the 
+# training data (the last 3 years) than the training data of the earlier years.
+
+#########
+## 2.6 ##
+#########
+
+# The residuals have an increasing trend over time during the training data period , especially the last
+# training data (2020-2023), whereas from from 2018-2020 ( 2 years) the residuals are smaller and they do
+# not follow a normal distribution. So, the model assumptions are not fulfilled, as the variance of the 
+# training data is not the same during these periods. 
+# (Propably I should calculate the variance of data the first and later years of the training period) 
+# and make some scatter plots and qqplots of residuals.
+
 #####################
 #####  Part 4 #######  
 #####################
