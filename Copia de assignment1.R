@@ -21,7 +21,8 @@ tstep=1/12
 x=seq(x1,x59,by=tstep)
 
 # Load the training data & the dataframe of the training data and time
-path_t<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_train.xlsx"           # Change the path !
+# path_t<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_train.xlsx"           # Change the path !
+path_t <- "C:/Users/margr/OneDrive - Danmarks Tekniske Universitet/Skrivebord/DTU/time-series-analysis/assignments/assignment1/data/DST_BIL54_train.xlsx"
 training_data <- t(readxl::read_excel(path_t, sheet = 1, col_names =TRUE)[1,2:(n+1)])
 train_data <- data.frame(time = x,Drivmidler_i_alt=training_data)
 
@@ -150,11 +151,12 @@ plotting2_4+labs(color = "") +
 #########
 
 # Load the test data:
-path_ch<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_test.xlsx"
+# path_ch<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_test.xlsx"
+path_ch <- "C:/Users/margr/OneDrive - Danmarks Tekniske Universitet/Skrivebord/DTU/time-series-analysis/assignments/assignment1/data/DST_BIL54_train.xlsx"
 check_data <- t(readxl::read_excel(path_ch, sheet = 1, col_names =TRUE)[1,2:13])
 test_data <- data.frame(Time = xtest,Drivmidler_i_alt=check_data)
 # plot WITH test data:
-plotting2_5<-plotting2_4 +
+plotting2_5 <- plotting2_4 +
   geom_point(data=test_data, aes(x=Time,y=Drivmidler_i_alt,color = "Test Data"), size=1.25)+
   labs(color = "") +
   scale_color_manual(values = c("red","red","green","blue"), name = "", labels = c("Fitted model","Forecasted values","Test data","Training data"))+
@@ -191,9 +193,9 @@ plotting2_5
 
 # As the data shows a linear behavior, we will implement a linear trend model.
 
-L = cbind(c(1,0), c(1,1))
-f.0 = c(1,0)
-
+L <- cbind(c(1,0), c(1,1))
+Linv <- solve(L)
+f.0 <- c(1,0)
 
 #########
 ## 4.2 ##

@@ -1,0 +1,78 @@
+#########
+## 4.4 ##
+#########
+
+F_H_pred <- function(N, lambda, Y, l) {
+  
+  # Define F.1 and h.1
+  F_new <- f(0) %*% t(f(0))
+  h_new <- f(0) * Y[1]
+
+  
+  # Empty list:
+  l_steps <- c()
+
+  for(i in 2:N) {
+    F_new <- F_new + lambda^(i - 1) * f(-(i - 1)) %*% t(f(-(i - 1)))
+    h_new <- lambda * Linv %*% h_new + f(0) * Y[i]
+    theta_new <- solve(F_new) %*% h_new
+
+    yhat_new <- t(f(-(i-1):(N-i)))%*%theta_new
+
+    # Predict l steps ahead if i + l <= N
+    if(i+l <= N) {
+      l_steps <- c(l_steps, yhat_new[i+l])
+    }
+  }
+  
+  theta_x <- solve(F_new) %*% h_new
+
+  return(list(F_new = F_new, h_new = h_new, theta_new = theta_x, l_steps = l_steps))
+}
+
+i <- 59
+
+# l = 1:
+l <- 1
+pred_res <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
+data_one_step <- matrix(pred_res$l_steps)
+
+# Plot pred_res$l_steps together with the data:
+plot_N <- ggplot(df, aes(x=j, y=y)) +
+    geom_point() +
+    geom_point(data=df[1:(i-2),], aes(y = data_one_step), col="blue", size=4) +
+    xlim(-60, 12) + ylim(2300000, 2700000)
+plot_N
+
+# l = 6:
+l <- 6
+pred_res <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
+data_six_step <- matrix(pred_res$l_steps)
+
+# Plot pred_res$l_steps together with the data:
+plot_N <- ggplot(df, aes(x=j, y=y)) +
+    geom_point() +
+    geom_point(data=df[1:(length(data_six_step)),], aes(y = data_six_step), col="blue", size=4) +
+    xlim(-60, 12) + ylim(2300000, 2700000)
+plot_N
+
+# l = 12:
+l <- 12
+pred_res <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
+data_twelve_step <- matrix(pred_res$l_steps)
+
+# Plot pred_res$l_steps together with the data:
+plot_N <- ggplot(df, aes(x=j, y=y)) +
+    geom_point() +
+    geom_point(data=df[1:(length(data_twelve_step)),], aes(y = data_twelve_step), col="blue", size=4) +
+    xlim(-60, 12) + ylim(2300000, 2700000)
+plot_N
+
+# Plot all together in different colours:
+plot_N <- ggplot(df, aes(x=j, y=y)) +
+    geom_point() +
+    geom_point(data=df[1:(length(data_one_step)),], aes(y = data_one_step), col="blue", size=4) +
+    geom_point(data=df[1:(length(data_six_step)),], aes(y = data_six_step), col="red", size=4) +
+    geom_point(data=df[1:(length(data_twelve_step)),], aes(y = data_twelve_step), col="green", size=4) +
+    xlim(-60, 12) + ylim(2300000, 2700000)
+plot_N
