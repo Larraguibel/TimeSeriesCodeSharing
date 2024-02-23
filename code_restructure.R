@@ -345,7 +345,7 @@ i <- 59
 
 # l = 1:
 l <- 1
-pred_res_1 <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
+pred_res_1 <- F_H_pred(N=i, lambda=0.05, Y=y, l=l)
 
 # Plot pred_res$l_steps together with the data:
 start_1 <- length(df[,1]) - length(pred_res_1$l_steps) + 1 # 1 indexed
@@ -369,7 +369,7 @@ plot_N
 
 # l = 12:
 l <- 12
-pred_res_12 <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
+pred_res_12 <- F_H_pred(N=i, lambda=0.05, Y=y, l=l)
 
 # Plot pred_res$l_steps together with the data:
 start_12 <- length(df[,1]) - length(pred_res_12$l_steps) + 1
@@ -395,21 +395,25 @@ plot_N
 # Repeat iterative predictions with lambda = 0.55, 0.56, ... 0.95 and calculate RMSE for each forecast-horizon (l = 1, l = 6, l = 12) and for each lambda value:
 iter_pred <- function(N, lambda_lst, Y, l_lst) {
   
-  # Define F.1 and h.1
-  F_new <- f(0) %*% t(f(0))
-  h_new <- f(0) * Y[1]
-  
   rmse_lambda <- list(one_step = numeric(length(lambda_lst)),
                       six_step = numeric(length(lambda_lst)),
                       twelve_step = numeric(length(lambda_lst)))
   
   for(l in l_lst) {
+
     for(lambda_idx in seq_along(lambda_lst)) {
       lambda <- lambda_lst[lambda_idx]
-      count <- 0
-      se_lambda <- 0
+      rse_lambda <- 0
+      # Define F.1 and h.1
+      F_new <- f(0) %*% t(f(0))
+      h_new <- f(0) * Y[1]
       
-      for(j in 2:N) {
+      for(i in 2:10) {
+        F_new <- F_new + lambda^(i - 1) * f(-(i - 1)) %*% t(f(-(i - 1)))
+        h_new <- lambda * Linv %*% h_new + f(0) * Y[i]
+      }
+
+      for(j in 11:N) {
         F_new <- F_new + lambda^(j - 1) * f(-(j - 1)) %*% t(f(-(j - 1)))
         h_new <- lambda * Linv %*% h_new + f(0) * Y[j]
         theta_new <- solve(F_new) %*% h_new
@@ -418,12 +422,12 @@ iter_pred <- function(N, lambda_lst, Y, l_lst) {
 
         # Predict l steps ahead if j + l <= N
         if(j+l <= N) {
-          se_lambda <- se_lambda + (Y[(j+l)] - yhat_new[j+l])^2
-          count <- count + 1
+          rse_lambda <- rse_lambda + sqrt((Y[(j+l)] - yhat_new[j+l])^2))
+          # rse_lambda <- rse_lambda + sqrt(((Y[(j+l)] - yhat_new[j+l])^2)/(N - j))
         }
       }
       
-      rmse_lambda[[paste0(l, "_step")]][lambda_idx] <- sqrt(se_lambda/count)
+      rmse_lambda[[paste0(l, "_step")]][lambda_idx] <- rse_lambda 
     }
   }
 
@@ -471,7 +475,7 @@ plot_N
 ##########
 
 # Sum of weights when lambda = 0.5:
-lambda <- 0.5
+lambda <- 0.50
 lambda <- 0.7
 sum(lambda^(1:length(y))) # = 1 -> problematic!
 
@@ -482,6 +486,28 @@ sum(lambda^(1:length(y))) # = 1 -> problematic!
 ## 4.11 ##
 ##########
 
-naive_persistance_model <- function(Y, l) {
+naive_persistence_model <- function(N, Y) {
+  
+  rse <- 0
+  for(j in 11:N) {
+    # Predict l steps ahead if j + l <= N
+    if(j+1 <= N) {
+      rse <- rse + sqrt((Y[(j+1)] - Y[j])^2)
+    }
+  }
 
+  return(rse)
 }
+length(df[2:(length(y)),])
+df[1:(length(pred_res_1$l_steps)),]
+y[2:length(y)]
+y
+matrix(y[2:length(y)])
+df[2:length(y),]
+y
+plot_N <- ggplot(df, aes(x=j, y=y)) +
+    geom_point() +
+    # geom_point(data=df[1:(length(pred_res_1$l_steps)),], aes(y = pred_res_1$l_steps), col="blue", size=2) +
+    geom_point(data=df[2:length(y),], aes(y = matrix(y[2:length(y)])), col="red", size=2) +
+    xlim(-60, 12) + ylim(2300000, 2700000)
+plot_N
