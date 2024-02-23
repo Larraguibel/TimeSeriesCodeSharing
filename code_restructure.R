@@ -217,6 +217,14 @@ f.0
 ## 4.2 ##
 #########
 
+# Defining some values:
+y <- matrix(train_data$'Drivmidler_i_alt')
+j <- matrix(seq(-58, 0), ncol = 1)
+f <- function(j) rbind(1, j)
+L <- matrix(c(1.,0., 1.,1.),
+            byrow=TRUE, nrow=2)
+Linv <- solve(L)
+
 # Our x vector starts from 2018. We need to translate it into the negative
 # part to the axis.
 
@@ -224,54 +232,51 @@ j <- seq(- (length(train_data) - 1), 0, 1)
 
 f <- function(j) rbind(1, j)
 
-# F function for arbitrary N and lambda values:
-F_N <- function(n, lambda) { # If Lambda initialized at 1 -> has no influence, just notation
-    if(n < 0 || lambda > 1 || lambda <= 0) {
-      return(0)
-    }
-  
-    F_val <- (lambda^0) * f(0)%*%t(f(0))
-    
-    for (i in 1:n) {
-      F_val <- F_val + (lambda^(i)) * f(-i)%*%t(f(-i))
-    }
-    return(F_val)
-}
-res <- F_N(1, lambda = 1)
-res
+# Define F.1 and h.1
+F.N <- f(0) %*% t(f(0))
+h.N <- f(0) * Y[1]
+
+F.N
+h.N
 
 #########
 ## 4.3 ##
 #########
-
-# Compute recursive h_N:
-h_N <- function(n, lambda, Linv, Y) {
-  if(N <= 0 || lambda <= 0 || lambda > 1){
-    return(0)
-  }
-
-  result <- f(0) * Y[n]
-
-  for(i in 1:n) {
-    result <- result + lambda * Linv %*% h_N + f(-i) * Y[n - i]
-  }
-  
-  return(result)
-}
 
 h_N(10, lambda=0.9, y)
 
 #############################
 ## Part 4.3  (Alternative) ##
 #############################
-ytrain <- train_data$'Drivmidler_i_alt'
-ytrain
-j <- matrix(seq(-58, 0), ncol = 1)
-y <- matrix(ytrain)
-f <- function(j) rbind(1, j)
-L <- matrix(c(1.,0., 1.,1.),
-            byrow=TRUE, nrow=2)
-Linv <- solve(L)
+
+# F function for arbitrary N and lambda values:
+F_N <- function(n, lambda) { # If Lambda initialized at 1 -> has no influence, just notation
+  if(n < 0 || lambda > 1 || lambda <= 0) {
+    return(0)
+  }
+  
+  F_val <- (lambda^0) * f(0)%*%t(f(0))
+  
+  for (i in 2:n) {
+    F_val <- F_val + (lambda^(i)) * f(-i)%*%t(f(-i))
+  }
+  return(F_val)
+}
+
+# Compute recursive h_N:
+h_N <- function(n, lambda, Linv, Y) {
+  if(n <= 0 || lambda <= 0 || lambda > 1){
+    return(0)
+  }
+  
+  result <- f(0) * Y[n]
+  
+  for(i in 2:n) {
+    result <- result + lambda * Linv %*% h_N + f(-i) * Y[n - i]
+  }
+  
+  return(result)
+}
 
 F_H_theta_calc <- function(N, lambda, Y) {
   
@@ -311,17 +316,15 @@ ggplot(df, aes(x=j, y=y)) +
 
 F_H_pred <- function(N, lambda, Y, l) {
   
-  # Define F.1 and h.1
-  F_new <- f(0) %*% t(f(0))
-  h_new <- f(0) * Y[1]
-  # F_new <- F_new + lambda^(1) * f(-(1)) %*% t(f(-(1)))
-  # h_new <- lambda * Linv %*% h_new + f(0) * Y[2]
-  
+  # Init values:
+  init_values <- F_H_theta_calc(N=10, lambda=lambda, Y=y)
+  F_new <- init_values$F.N
+  h_new <- init_values$h.N
   
   # Empty list:
   l_steps <- c()
 
-  for(i in 2:N) {
+  for(i in 11:N) {
     F_new <- F_new + lambda^(i - 1) * f(-(i - 1)) %*% t(f(-(i - 1)))
     h_new <- lambda * Linv %*% h_new + f(0) * Y[i]
     theta_new <- solve(F_new) %*% h_new
@@ -344,12 +347,13 @@ i <- 59
 # l = 1:
 l <- 1
 pred_res_1 <- F_H_pred(N=i, lambda=0.05, Y=y, l=l)
+pred_res_1$l_steps
 
 # Plot pred_res$l_steps together with the data:
 start_1 <- length(df[,1]) - length(pred_res_1$l_steps) + 1 # 1 indexed
 plot_N <- ggplot(df, aes(x=j, y=y)) +
     geom_point() +
-    geom_point(data=df[start_1:length(df[,1]),], aes(y = pred_res_1$l_steps), col="blue", size=3) +
+    geom_point(data=df[start_1:length(df[,1]),1], aes(y = pred_res_1$l_steps), col="blue", size=3) +
     xlim(-60, 12) + ylim(2300000, 2700000)
 plot_N
 
@@ -555,25 +559,31 @@ test_forecast <- function(N, lambda, Y, l) {
   
   # Empty list:
   l_steps <- c()
+  
+  train_N <- 59
 
-  for(i in 2:N) {
+  for(i in 2:train_N) {
     F_new <- F_new + lambda^(i - 1) * f(-(i - 1)) %*% t(f(-(i - 1)))
     h_new <- lambda * Linv %*% h_new + f(0) * Y[i]
   }
   
   theta_new <- solve(F_new) %*% h_new
 
-  # Create prediction:
-  yhat <- t(f(-(length(Y)-1):(N-i))) %*% theta_new
+  # Create prediction for train_N + 1:
+  yhat <- t(f(-(train_N-1):(N-train_N)))%*%theta_new
 
   return(yhat)
 }
 
-preds_one <- test_forecast(N=59, lambda=best_lambda(rmse_lambda, 1), Y=y_train_test, l=1)
+preds_l_1 <- test_forecast(N=length(y_train_test), lambda=best_lambda(rmse_lambda, 1), Y=y_train_test, l=1)[60]
+preds_l_6 <- test_forecast(N=length(y_train_test), lambda=0.79, Y=y_train_test, l=1)[65]
+preds_l_12 <- test_forecast(N=length(y_train_test), lambda=best_lambda(rmse_lambda, 12), Y=y_train_test, l=1)[71]
 
-# Plot preds_one and y_df together:
+# Plot data with point forecasts:
 plot_y_df <- ggplot(y_df, aes(x=x, y=y)) +
   geom_point() +
-  geom_point(data=y_df[1:length(y_df[,1]),], aes(y = preds_one), col="blue", size=2) +
+  geom_point(data=y_df[60,], aes(y = preds_l_1), col="blue", size=3) +
+  geom_point(data=y_df[65,], aes(y = preds_l_6), col="green", size=3) +
+  geom_point(data=y_df[71,], aes(y = preds_l_12), col="red", size=3) +
   xlim(2018, 2024) + ylim(2300000, 2700000)
 plot_y_df
