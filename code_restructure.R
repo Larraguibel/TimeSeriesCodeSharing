@@ -228,22 +228,14 @@ Linv <- solve(L)
 # Our x vector starts from 2018. We need to translate it into the negative
 # part to the axis.
 
-j <- seq(- (length(train_data) - 1), 0, 1)
-
 f <- function(j) rbind(1, j)
 
 # Define F.1 and h.1
 F.N <- f(0) %*% t(f(0))
-h.N <- f(0) * Y[1]
+h.N <- f(0) * y[1]
 
 F.N
 h.N
-
-#########
-## 4.3 ##
-#########
-
-h_N(10, lambda=0.9, y)
 
 #############################
 ## Part 4.3  (Alternative) ##
