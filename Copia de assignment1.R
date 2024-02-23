@@ -38,11 +38,6 @@ plotting
 ## 1.2 ##
 #########
 
-# We can observe that the data looks linear to some point, though a curve
-# would probably fit better. To analize further whe should consider that
-# the scale of the axis might bias usto see linearity. 
-
-
 #####################
 #####  Part 2 #######  
 #####################
@@ -59,28 +54,11 @@ beta0 = round(as.double(theta_hat[1]), 3)
 beta1 = round(as.double(theta_hat[2]), 3)
 plotting+geom_abline(intercept = theta_hat[1], slope=theta_hat[2], col='red')
 
-# To estimate the parameters theta, I used the matrix form of the maximum
-# likelihood estimator for the parameters. For this, I considered that 
-# each observation comes from a normal distribution, and the errors also
-# follow the normal distribution with mean equal to 0 and constant variance 
-# sigma. For every pair of error_i and error_j, i != j, error_i and error_j 
-# are uncorrelated.
-
-
 #########
 ## 2.2 ##
 #########
 
 cat(sprintf("\nthe values are: \n b0.hat: %f \n b1.hat: %f", beta0, beta1))
-
-# At this point, we will estimate the predicted values for b0 and b1, and the 
-# residuals (the difference of real values and the predicted).Afterwards, we 
-# can calculate the variance of the residuals (sigma^2) as a sum of squared 
-# errors of residuals divided by (n (observations)-p (parameters)) and then 
-# the variance-covariance matrix of the residuals that is given by sigma**2 * 
-# (x^T x)^{-1}.The estimated standart error of each parameter is given by the
-# square root of the corresponding diagonal element of the variance-covariace
-# matrix.
 
 # Predicted values
 y_lm <- X %*% theta_hat
@@ -119,8 +97,9 @@ print(y_pred)
 # compute prediction variance-covariance matrix:
 sigma2<-residuals_std**2
 Vtheta_hat_test <- sigma2*(1+Xtest%*%inv_xtx%*%t(Xtest))
-# the variances of individual predictions are in the diagonal of the matrix above# compute "prediction intervals"
-#he critical value for a 5% significance level is(as the t-distribution can be approximated by the standard normal
+# the variances of individual predictions are in the diagonal of the matrix above
+#compute "prediction intervals"
+#the critical value for a 5% significance level is(as the t-distribution can be approximated by the standard normal
 #distribution when the sample size is large (typically N > 30)): 
 z1_a2=1.96
 y_pred_lwr <- y_pred - z1_a2*sqrt(diag(Vtheta_hat_test))
@@ -163,25 +142,29 @@ plotting2_5 <- plotting2_4 +
   guides(color = guide_legend(override.aes = list(linetype = c("solid","blank","blank","blank"),shape=c(NA,16,16,16))))
 plotting2_5
 
-# Our forecast is not good as the model consistently overestimates the values of the test data. 
-# This is evident in the graph, where all test data points fall below the lower prediction interval.
-# The model initially performs well, exhibiting smaller residuals during the first 2 years of the 
-# 5-year training data period. However, a notable increase in residuals is observed during the last 
-# 3 years of the training data.As a result, the linear model is inadequate to describe the test data,
-# as it fails to capture changing dynamics and trends in the later years of the training data. The
-# The accuracy of the  model could  be enchanced if we consider more weighting the later data  of the 
-# training data (the last 3 years) than the training data of the earlier years.
-
 #########
 ## 2.6 ##
 #########
 
-# The residuals have an increasing trend over time during the training data period , especially the last
-# training data (2020-2023), whereas from from 2018-2020 ( 2 years) the residuals are smaller and they do
-# not follow a normal distribution. So, the model assumptions are not fulfilled, as the variance of the 
-# training data is not the same during these periods. 
-# (Propably I should calculate the variance of data the first and later years of the training period) 
-# and make some scatter plots and qqplots of residuals.
+# Residual plot vs fitted values
+residual_plot <- ggplot(data = data.frame(Fitted = y_lm, Residuals = residuals), aes(x = Fitted, y = Residuals)) +
+  geom_point(color = "black", shape = 16) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(x = "Fitted Values", y = "Residuals") +
+  ggtitle("Residuals vs Fitted Values") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Normal Q-Q plot of residuals
+qq_plot <- ggplot(data = data.frame(Residuals = residuals), aes(sample = Residuals)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot of Residuals",x = "Theoretical Quantiles", y = "Standardized Residuals") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Display the plots
+residual_plot
+qq_plot
+
 
 #####################
 #####  Part 4 #######  
