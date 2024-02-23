@@ -130,7 +130,7 @@ plotting2_4+labs(color = "") +
 #########
 
 # Load the test data:
-# path_ch<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_test.xlsx"
+# path_ch<-"C:/Users/spisa/OneDrive/Υπολογιστής/Assignment1_TSA/DST_BIL54_test.xlsx"        # Change the path !
 path_ch <- "C:/Users/margr/OneDrive - Danmarks Tekniske Universitet/Skrivebord/DTU/time-series-analysis/assignments/assignment1/data/DST_BIL54_train.xlsx"
 check_data <- t(readxl::read_excel(path_ch, sheet = 1, col_names =TRUE)[1,2:13])
 test_data <- data.frame(Time = xtest,Drivmidler_i_alt=check_data)
