@@ -8,7 +8,6 @@ library(readxl)
 ######################################
 ##### Load data - generalization #####
 ######################################
-
 # Create the vector of time, x
 n<-59
 x1=2018.
@@ -19,12 +18,21 @@ x=seq(x1,x59,by=tstep)
 # Load training data & the dataframe of the training data and time:
 parent_dir <- dirname(dirname(rstudioapi::getSourceEditorContext()$path)) # Put data in parent folder of repository
 data_path <- paste0(parent_dir, "/DST_BIL54_train.xlsx")
+test_path <- paste0(parent_dir, "/DST_BIL54_test.xlsx")
 # Conventional:
 data_path <- "C:/Users/margr/OneDrive - Danmarks Tekniske Universitet/Skrivebord/DTU/time-series-analysis/assignments/assignment1/DST_BIL54_train.xlsx"
-data_path # Test path
 data <- t(readxl::read_excel(data_path, sheet = 1, col_names =TRUE)[1,2:(n+1)])
 train_data <- data.frame(time = x, Drivmidler_i_alt=data)
-print(train_data)
+
+# Create the vector of forecasting time, xtest:
+x60=x59+1/12
+x71=x59+1
+xtest=seq(x60,x71,by=tstep)
+Xtest <- cbind(1, xtest)
+
+# Load test data:
+check_data <- t(readxl::read_excel(test_path, sheet = 1, col_names =TRUE)[1,2:13])
+test_data <- data.frame(Time = xtest,Drivmidler_i_alt=check_data)
 
 #####################
 #####  Part 1 #######  
@@ -42,7 +50,7 @@ train_data <- data.frame(time = x,Drivmidler_i_alt=training_data)
 
 # Plot the training data versus x
 y_name<- 'Number of vehicles'
-plotting<-ggplot(data_train, aes(x = time, y = Drivmidler_i_alt)) +
+plotting<-ggplot(train_data, aes(x = time, y = Drivmidler_i_alt)) +
   geom_point(color = "blue", shape = "o") +
   labs(x = 'Year', y = y_name)+ ggtitle('Drivmidler i alt vs time')+
   theme(plot.title = element_text(hjust = 0.5))
@@ -120,13 +128,6 @@ print(results2_2)
 ## 2.3 ##
 #########
 
-# Create the vector of forecasting time, xtest
-x60=x59+1/12
-x71=x59+1
-xtest=seq(x60,x71,by=tstep)
-Xtest <- cbind(1, xtest)
-print(Xtest)
-
 # compute predictions 
 y_pred <- Xtest%*%theta_hat
 print(y_pred)
@@ -164,9 +165,6 @@ plotting2_4+labs(color = "") +
 ## 2.5 ##
 #########
 
-# Load the test data:
-check_data <- t(readxl::read_excel(data_path, sheet = 1, col_names =TRUE)[1,2:13])
-test_data <- data.frame(Time = xtest,Drivmidler_i_alt=check_data)
 # plot WITH test data:
 plotting2_5 <- plotting2_4 +
   geom_point(data=test_data, aes(x=Time,y=Drivmidler_i_alt,color = "Test Data"), size=1.25)+
@@ -222,7 +220,7 @@ f.0
 # Our x vector starts from 2018. We need to translate it into the negative
 # part to the axis.
 
-j <- seq(- (length(data_train) - 1), 0, 1)
+j <- seq(- (length(train_data) - 1), 0, 1)
 
 f <- function(j) rbind(1, j)
 
@@ -369,7 +367,7 @@ plot_N
 
 # l = 12:
 l <- 12
-pred_res_12 <- F_H_pred(N=i, lambda=0.05, Y=y, l=l)
+pred_res_12 <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
 
 # Plot pred_res$l_steps together with the data:
 start_12 <- length(df[,1]) - length(pred_res_12$l_steps) + 1
@@ -422,8 +420,7 @@ iter_pred <- function(N, lambda_lst, Y, l_lst) {
 
         # Predict l steps ahead if j + l <= N
         if(j+l <= N) {
-          rse_lambda <- rse_lambda + sqrt((Y[(j+l)] - yhat_new[j+l])^2))
-          # rse_lambda <- rse_lambda + sqrt(((Y[(j+l)] - yhat_new[j+l])^2)/(N - j))
+          rse_lambda <- rse_lambda + sqrt((Y[(j+l)] - yhat_new[j+l])^2)
         }
       }
       
@@ -456,9 +453,24 @@ plot_RMSE <- function(rmse_lambda) {
 plot_RMSE(rmse_lambda)
 rmse_lambda[[paste0(1, "_step")]]
 
+# Minimum index:
+min_idx <- function(rmse_lambda, l) {
+  return(which.min(rmse_lambda[[paste0(l, "_step")]]))
+}
+
+# Minimum values:
+best_lambda <- function(rmse_lambda, l) {
+  return(0.55 + (min_idx(rmse_lambda, l) - 1) * 0.01)
+}
+
+best_lambda(rmse_lambda, 1)
+best_lambda(rmse_lambda, 6)
+best_lambda(rmse_lambda, 12)
+
+
 # What this tells us:
   # The optimal lambda value depends on the forecast-horizon. For l = 1, it is revealed, that a low lambda value is optimal (lambda = 0.55),
-  # whilst for both l = 6 and l = 12, these reach a minima when lambda = 0.87. This is interesting, as it suggests that the optimal lambda
+  # whilst for both l = 6 and l = 12, these reach a minima when lambda = 0.95. This is interesting, as it suggests that the optimal lambda
   # value is not the same for all forecast-horizons. This is likely due to the fact that the optimal lambda value depends on the underlying
   # trend in the data, and as such, the optimal lambda value is not the same for all forecast-horizons.
 
@@ -498,16 +510,70 @@ naive_persistence_model <- function(N, Y) {
 
   return(rse)
 }
-length(df[2:(length(y)),])
-df[1:(length(pred_res_1$l_steps)),]
-y[2:length(y)]
-y
-matrix(y[2:length(y)])
-df[2:length(y),]
-y
+
+# Plot data and y displaced by one to the right (naive persistence model):
+y_plot <- y
 plot_N <- ggplot(df, aes(x=j, y=y)) +
     geom_point() +
-    # geom_point(data=df[1:(length(pred_res_1$l_steps)),], aes(y = pred_res_1$l_steps), col="blue", size=2) +
-    geom_point(data=df[2:length(y),], aes(y = matrix(y[2:length(y)])), col="red", size=2) +
+    geom_point(data=df[2:length(df[,1]),], aes(y = matrix(y_plot[1:(length(y_plot)-1)])), col="blue", size=2) +
     xlim(-60, 12) + ylim(2300000, 2700000)
 plot_N
+
+# Retrieve RMSE for the model:
+npm_rmse <- naive_persistence_model(N=59, Y=y)
+npm_rmse
+min_idx(rmse_lambda, 1)
+rmse_lambda$'1_step'[1]
+# Difference:
+one_step_pred_vs_npm <- npm_rmse - rmse_lambda$'1_step'[min_idx(rmse_lambda, 1)]
+one_step_pred_vs_npm # Given, that the error is positive, this showcases that our non-naive WLS predictions create superior predictions than those of a NPM
+
+##########
+## 4.12 ##
+##########
+
+# Merge training and test dataset:
+x_train_test <- seq(x1, x71, by=tstep)
+ytest <- test_data$'Drivmidler_i_alt'
+ytest
+y_train_test <- matrix(c(y, ytest))
+
+y_train_test
+y_df <- data.frame(x=x_train_test, y=y_train_test)
+y_df
+
+plot_y_df <- ggplot(y_df, aes(x=x, y=y)) +
+  geom_point() +
+  xlim(2018, 2024) + ylim(2300000, 2700000)
+plot_y_df
+
+test_forecast <- function(N, lambda, Y, l) {
+  
+  # Define F.1 and h.1
+  F_new <- f(0) %*% t(f(0))
+  h_new <- f(0) * Y[1]
+  
+  # Empty list:
+  l_steps <- c()
+
+  for(i in 2:N) {
+    F_new <- F_new + lambda^(i - 1) * f(-(i - 1)) %*% t(f(-(i - 1)))
+    h_new <- lambda * Linv %*% h_new + f(0) * Y[i]
+  }
+  
+  theta_new <- solve(F_new) %*% h_new
+
+  # Create prediction:
+  yhat <- t(f(-(length(Y)-1):(N-i))) %*% theta_new
+
+  return(yhat)
+}
+
+preds_one <- test_forecast(N=59, lambda=best_lambda(rmse_lambda, 1), Y=y_train_test, l=1)
+
+# Plot preds_one and y_df together:
+plot_y_df <- ggplot(y_df, aes(x=x, y=y)) +
+  geom_point() +
+  geom_point(data=y_df[1:length(y_df[,1]),], aes(y = preds_one), col="blue", size=2) +
+  xlim(2018, 2024) + ylim(2300000, 2700000)
+plot_y_df
