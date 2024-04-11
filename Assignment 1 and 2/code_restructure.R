@@ -21,7 +21,7 @@ data_path <- paste0(parent_dir, "/DST_BIL54_train.xlsx")
 test_path <- paste0(parent_dir, "/DST_BIL54_test.xlsx")
 # Conventional:
 data_path <- "C:/Users/margr/OneDrive - Danmarks Tekniske Universitet/Skrivebord/DTU/time-series-analysis/assignments/assignment1/DST_BIL54_train.xlsx"
-data <- t(readxl::read_excel(data_path, sheet = 1, col_names =TRUE)[1,2:(n+1)])
+data <- t(readxl::read_excel(file.choose(), sheet = 1, col_names =TRUE)[1,2:(n+1)])
 train_data <- data.frame(time = x, Drivmidler_i_alt=data)
 
 # Create the vector of forecasting time, xtest:
@@ -31,8 +31,8 @@ xtest=seq(x60,x71,by=tstep)
 Xtest <- cbind(1, xtest)
 
 # Load test data:
-check_data <- t(readxl::read_excel(test_path, sheet = 1, col_names =TRUE)[1,2:13])
-test_data <- data.frame(Time = xtest,Drivmidler_i_alt=check_data)
+check_data <- t(readxl::read_excel(file.choose(), sheet = 1, col_names =TRUE)[1,2:13])
+test_data <- data.frame(Time = check_data,Drivmidler_i_alt=check_data)
 
 #####################
 #####  Part 1 #######  
@@ -227,7 +227,7 @@ Linv <- solve(L)
 
 # Our x vector starts from 2018. We need to translate it into the negative
 # part to the axis.
-
+df <- data.frame(j = j, y = y)
 f <- function(j) rbind(1, j)
 
 # Define F.1 and h.1
@@ -338,14 +338,14 @@ i <- 59
 
 # l = 1:
 l <- 1
-pred_res_1 <- F_H_pred(N=i, lambda=0.05, Y=y, l=l)
+pred_res_1 <- F_H_pred(N=i, lambda=0.9, Y=y, l=l)
 pred_res_1$l_steps
-
+df
 # Plot pred_res$l_steps together with the data:
 start_1 <- length(df[,1]) - length(pred_res_1$l_steps) + 1 # 1 indexed
 plot_N <- ggplot(df, aes(x=j, y=y)) +
     geom_point() +
-    geom_point(data=df[start_1:length(df[,1]),1], aes(y = pred_res_1$l_steps), col="blue", size=3) +
+    geom_point(data=df[start_1:length(df[,1]),], aes(y = pred_res_1$l_steps), col="blue", size=3) +
     xlim(-60, 12) + ylim(2300000, 2700000)
 plot_N
 
@@ -375,12 +375,20 @@ plot_N
 
 # Plot all together in different colours:
 plot_N <- ggplot(df, aes(x=j, y=y)) +
-    geom_point() +
-    geom_point(data=df[start_1:length(df[,1]),], aes(y = pred_res_1$l_steps), col="blue", size=3) +
-    geom_point(data=df[start_6:length(df[,1]),], aes(y = pred_res_6$l_steps), col="red", size=3) +
-    geom_point(data=df[start_12:length(df[,1]),], aes(y = pred_res_12$l_steps), col="green", size=3) +
-    xlim(-60, 12) + ylim(2300000, 2700000)
+  geom_point() +
+  geom_point(data=df[start_1:length(df[,1]),], aes(y = pred_res_1$l_steps, color = "1 month pred"), size=3) +
+  geom_point(data=df[start_6:length(df[,1]),], aes(y = pred_res_6$l_steps, color = "6 month pred"), size=3) +
+  geom_point(data=df[start_12:length(df[,1]),], aes(y = pred_res_12$l_steps, color = "12 month pred"), size=3) +
+  xlim(-60, 12) + ylim(2300000, 2700000) +
+  labs(color = "Prediction Period") +  # Legend title
+  scale_color_manual(values = c("blue", "red", "green"), labels = c("1 month pred", "6 month pred", "12 month pred")) +  # Manual color and label specification
+  ggtitle("1-6-12 months predictions for 59 training points model") + 
+  theme(legend.key.size = unit(2, "lines"),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = 0.5))  # Center the title
+
 plot_N
+
 
 ###########################
 ## 4.6, 4.7, 4.8 and 4.9 ##
