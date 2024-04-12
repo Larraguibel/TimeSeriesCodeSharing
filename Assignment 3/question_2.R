@@ -2,14 +2,12 @@
 # "/Users/terriblepollo/Desktop/Exchange Courses/Time Series Analysis/Assignments/Assignment 3"
 files <- dir("functions",full.names=TRUE)
 for(i in 1:length(files)) source(files[i])
-
-
+files
 # Read data and create lag vectors
 
 X <- read.table("data/experiment1.csv", sep=",", header=TRUE)
 # Convert to t_1 = 0
 X$t <- X$t - X$t[1]
-
 lagdf(X[ ,2:6], 1)
 
 # Add the lags to X
@@ -50,12 +48,24 @@ summary(first_fit)
 validate(first_fit)
 step_fit = step(first_fit, direciton="backward", scope="Tinner ~ 0")
 
-second_fit = lm("Tinner ~ 0 + Ta + Touter", data=X)
+second_fit = lm("Tinner ~ 0 + Ta + Touter + Pinner", data=X)
 step_fit = step(second_fit, direciton="backward", scope="Tinner ~ 0")
 summary(step_fit)
 validate(step_fit)
 
+third_fit = lm("Tinner ~ 0 + Ta + Touter + Pouter", data=X)
+step_fit = step(third_fit, direciton="backward", scope="Tinner ~ 0")
+summary(step_fit)
+validate(step_fit)
 
-fit = step(lm(ARX("Tinner", c("Pinner", "Ta", "Touter", "Pouter"), 1:2), data=X), direction="backward", scope="Tinner ~ 0")
+# Fit ARX model
+fit = step(lm(ARX("Tinner", c("Pinner", "Ta", "Touter"), 1:5), data=X), direction="backward", scope="Tinner ~ 0", k=0.05)
 summary(fit)
 validate(fit)
+fit
+a = AIC(fit)
+
+
+ARX("Tinner", c("Pinner", "Ta", "Touter"), 1:5)
+
+anova(fit)
